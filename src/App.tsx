@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { Activity, Plus, Play, Square, Trash2, Download } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import './index.css';
 
 type Target = { id: string; url: string; active: boolean; };
 type PingResult = { id: string; targetId: string; timestamp: number; latency: number; status: string; error?: string; };
@@ -20,7 +21,7 @@ export default function App() {
 
   useEffect(() => {
     localStorage.setItem('netpulse_targets', JSON.stringify(targets));
-    localStorage.setItem('netpulse_results', JSON.stringify(results.slice(-1000))); // Keep last 1000
+    localStorage.setItem('netpulse_results', JSON.stringify(results.slice(-1000)));
   }, [targets, results]);
 
   const addTarget = (e: React.FormEvent) => {
@@ -31,14 +32,8 @@ export default function App() {
     setNewUrl('');
   };
 
-  const toggleTarget = (id: string) => {
-    setTargets(targets.map(t => t.id === id ? { ...t, active: !t.active } : t));
-  };
-
-  const removeTarget = (id: string) => {
-    setTargets(targets.filter(t => t.id !== id));
-    setResults(results.filter(r => r.targetId !== id));
-  };
+  const toggleTarget = (id: string) => setTargets(targets.map(t => t.id === id ? { ...t, active: !t.active } : t));
+  const removeTarget = (id: string) => { setTargets(targets.filter(t => t.id !== id)); setResults(results.filter(r => r.targetId !== id)); };
 
   const ping = async (target: Target) => {
     if (!target.active) return;
@@ -53,9 +48,7 @@ export default function App() {
   };
 
   useEffect(() => {
-    timerRef.current = setInterval(() => {
-      targets.forEach(t => ping(t));
-    }, 10000);
+    timerRef.current = setInterval(() => { targets.forEach(t => ping(t)); }, 10000);
     return () => clearInterval(timerRef.current!);
   }, [targets]);
 
@@ -63,8 +56,7 @@ export default function App() {
     const csv = 'timestamp,target,latency,status\n' + results.map(r => `${new Date(r.timestamp).toISOString()},${targets.find(t=>t.id===r.targetId)?.url},${r.latency},${r.status}`).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'netpulse_export.csv'; a.click();
+    const a = document.createElement('a'); a.href = url; a.download = 'netpulse_export.csv'; a.click();
   };
 
   const stats = targets.map(t => {
@@ -72,39 +64,37 @@ export default function App() {
     const recent = tRes.slice(-10);
     const downCount = recent.filter(r => r.status === 'DOWN').length;
     const avgLatency = tRes.length ? Math.round(tRes.reduce((a, b) => a + b.latency, 0) / tRes.length) : 0;
-    
     let health = '🟢 Healthy';
     if (downCount > 0) health = '🟡 Degraded';
     if (downCount > 5 || (recent.length > 0 && recent[recent.length-1].status === 'DOWN')) health = '🔴 Down';
-    
     return { ...t, avgLatency, health, recent };
   });
 
   return (
-    <div style={{ padding: '2rem', fontFamily: 'sans-serif', maxWidth: '1000px', margin: 'auto' }}>
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '2rem' }}>
-        <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Activity color="#2563eb" /> NetPulse</h1>
-        <button onClick={exportData} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', cursor: 'pointer' }}><Download size={16}/> Export CSV</button>
+    <div className="container">
+      <header className="header">
+        <h1 className="title"><Activity /> NetPulse</h1>
+        <button onClick={exportData} className="btn btn-primary"><Download size={16}/> Export CSV</button>
       </header>
       
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 3fr', gap: '2rem' }}>
+      <div className="grid">
         <div>
-          <h3>Targets</h3>
-          <form onSubmit={addTarget} style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
-            <input value={newUrl} onChange={e=>setNewUrl(e.target.value)} placeholder="example.com" style={{ flex: 1, padding: '0.5rem' }} />
-            <button type="submit" style={{ padding: '0.5rem' }}><Plus size={16}/></button>
+          <h3 className="section-title">Targets</h3>
+          <form onSubmit={addTarget} className="input-group">
+            <input value={newUrl} onChange={e=>setNewUrl(e.target.value)} placeholder="example.com" className="input" />
+            <button type="submit" className="btn btn-primary"><Plus size={16}/></button>
           </form>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div className="target-list">
             {stats.map(t => (
-              <div key={t.id} style={{ border: '1px solid #ccc', padding: '1rem', borderRadius: '8px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <strong>{t.url}</strong>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <button onClick={() => toggleTarget(t.id)} title="Toggle">{t.active ? <Square size={16}/> : <Play size={16}/>}</button>
-                    <button onClick={() => removeTarget(t.id)} title="Delete"><Trash2 size={16}/></button>
+              <div key={t.id} className="target-item">
+                <div className="target-header">
+                  <div className="target-url">{t.url}</div>
+                  <div className="target-actions">
+                    <button onClick={() => toggleTarget(t.id)} className="btn-icon" title="Toggle">{t.active ? <Square size={16}/> : <Play size={16}/>}</button>
+                    <button onClick={() => removeTarget(t.id)} className="btn-icon btn-icon-danger" title="Delete"><Trash2 size={16}/></button>
                   </div>
                 </div>
-                <div style={{ fontSize: '0.9rem', color: '#555' }}>
+                <div className="target-stats">
                   <div>Status: {t.health}</div>
                   <div>Avg Latency: {t.avgLatency}ms</div>
                 </div>
@@ -114,34 +104,34 @@ export default function App() {
         </div>
 
         <div>
-          <h3>Dashboard</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '1rem', marginBottom: '2rem' }}>
-            <div style={{ padding: '1rem', background: '#f8fafc', borderRadius: '8px' }}>
-              <div style={{ fontSize: '2rem', fontWeight: 'bold' }}>{targets.length}</div>
-              <div>Targets</div>
+          <h3 className="section-title">Dashboard</h3>
+          <div className="stats-grid">
+            <div className="stat-box">
+              <div className="stat-val">{targets.length}</div>
+              <div className="target-stats">Targets</div>
             </div>
-            <div style={{ padding: '1rem', background: '#ecfdf5', borderRadius: '8px' }}>
-              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#059669' }}>{stats.filter(s=>s.health.includes('Healthy')).length}</div>
-              <div>Healthy</div>
+            <div className="stat-box" style={{background: 'var(--success-bg)', borderColor: '#a7f3d0'}}>
+              <div className="stat-val" style={{color: 'var(--success)'}}>{stats.filter(s=>s.health.includes('Healthy')).length}</div>
+              <div className="target-stats">Healthy</div>
             </div>
-            <div style={{ padding: '1rem', background: '#fffbeb', borderRadius: '8px' }}>
-              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#d97706' }}>{stats.filter(s=>s.health.includes('Degraded')).length}</div>
-              <div>Degraded</div>
+            <div className="stat-box" style={{background: 'var(--warning-bg)', borderColor: '#fde68a'}}>
+              <div className="stat-val" style={{color: 'var(--warning)'}}>{stats.filter(s=>s.health.includes('Degraded')).length}</div>
+              <div className="target-stats">Degraded</div>
             </div>
-            <div style={{ padding: '1rem', background: '#fef2f2', borderRadius: '8px' }}>
-              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#dc2626' }}>{stats.filter(s=>s.health.includes('Down')).length}</div>
-              <div>Down</div>
+            <div className="stat-box" style={{background: 'var(--danger-bg)', borderColor: '#fecaca'}}>
+              <div className="stat-val" style={{color: 'var(--danger)'}}>{stats.filter(s=>s.health.includes('Down')).length}</div>
+              <div className="target-stats">Down</div>
             </div>
           </div>
           
-          <h3>Latency History</h3>
-          <div style={{ height: '300px', border: '1px solid #eee', padding: '1rem', borderRadius: '8px' }}>
+          <h3 className="section-title">Latency History</h3>
+          <div className="chart-container">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={results.slice(-50).map(r => ({ time: new Date(r.timestamp).toLocaleTimeString(), latency: r.latency }))}>
-                <XAxis dataKey="time" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="latency" stroke="#2563eb" strokeWidth={2} dot={false} />
+                <XAxis dataKey="time" tick={{fontSize: 12, fill: 'var(--text-muted)'}} />
+                <YAxis tick={{fontSize: 12, fill: 'var(--text-muted)'}} />
+                <Tooltip contentStyle={{borderRadius: '8px', border: '1px solid var(--border)', boxShadow: '0 4px 6px rgba(0,0,0,0.05)'}} />
+                <Line type="monotone" dataKey="latency" stroke="var(--primary)" strokeWidth={2} dot={false} isAnimationActive={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
