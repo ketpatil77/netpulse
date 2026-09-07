@@ -1,5 +1,5 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
-import { Activity, Plus, Play, Square, Trash2, Download, AlertTriangle, CheckCircle, XCircle, Clock } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Activity, Plus, Play, Square, Trash2, Download } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 type Target = { id: string; url: string; active: boolean; };
@@ -9,7 +9,7 @@ export default function App() {
   const [targets, setTargets] = useState<Target[]>([]);
   const [results, setResults] = useState<PingResult[]>([]);
   const [newUrl, setNewUrl] = useState('');
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     const savedTargets = localStorage.getItem('netpulse_targets');
@@ -44,7 +44,7 @@ export default function App() {
     if (!target.active) return;
     const start = performance.now();
     try {
-      const res = await fetch(target.url, { mode: 'no-cors', cache: 'no-store' });
+      await fetch(target.url, { mode: 'no-cors', cache: 'no-store' });
       const latency = Math.round(performance.now() - start);
       setResults(prev => [...prev, { id: Date.now().toString(), targetId: target.id, timestamp: Date.now(), latency, status: 'OK' }]);
     } catch (err: any) {
