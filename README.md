@@ -1,32 +1,53 @@
-# React + TypeScript + Vite
+# NetPulse
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A lightweight React + TypeScript network reachability dashboard. Add HTTP/HTTPS targets, periodically probe them from the browser, track latency, view recent health signals, and export collected results as CSV.
 
-Currently, two official plugins are available:
+## What it does
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Add and remove HTTP/HTTPS monitoring targets
+- Automatically probe active targets every 10 seconds
+- Track response latency and reachability failures
+- Show healthy, degraded, and down summaries
+- Persist targets and the latest 1,000 results in browser `localStorage`
+- Export monitoring history as CSV
+- Visualize recent latency history with Recharts
 
-## React Compiler
+> **Important:** browser-based probes use `no-cors`, so the app measures network reachability rather than inspecting HTTP status codes from cross-origin targets. A successful opaque response means the request completed from the browser's perspective; it does not prove the server returned HTTP 2xx.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Stack
 
-## Expanding the Oxlint configuration
+- React 19
+- TypeScript
+- Vite
+- Recharts
+- Lucide React
+- Tailwind CSS 4
+- Oxlint
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## Local development
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+Requirements: Node.js and npm.
+
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Open the local Vite URL shown in the terminal.
+
+## Quality checks
+
+```bash
+npm run build
+npm run lint
+```
+
+## Data and privacy
+
+Monitoring targets and collected results are stored locally in the browser. The application does not provide a backend database or central monitoring service.
+
+## Limitations
+
+- Monitoring stops when the page is closed or suspended by the browser.
+- Cross-origin browser security prevents reliable inspection of remote HTTP status codes without a server-side probe.
+- Browser scheduling is best-effort, so the 10-second interval is not a hard real-time guarantee.
