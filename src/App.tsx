@@ -34,23 +34,20 @@ function csvCell(value: string | number): string {
   return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }
 
+function readSaved<T>(key: string): T[] {
+  try {
+    const saved: unknown = JSON.parse(localStorage.getItem(key) ?? '[]');
+    return Array.isArray(saved) ? saved : [];
+  } catch {
+    return [];
+  }
+}
+
 export default function App() {
-  const [targets, setTargets] = useState<Target[]>([]);
-  const [results, setResults] = useState<PingResult[]>([]);
+  const [targets, setTargets] = useState<Target[]>(() => readSaved<Target>(STORAGE_TARGETS));
+  const [results, setResults] = useState<PingResult[]>(() => readSaved<PingResult>(STORAGE_RESULTS));
   const [newUrl, setNewUrl] = useState('');
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  useEffect(() => {
-    try {
-      const savedTargets = localStorage.getItem(STORAGE_TARGETS);
-      const savedResults = localStorage.getItem(STORAGE_RESULTS);
-      if (savedTargets) setTargets(JSON.parse(savedTargets));
-      if (savedResults) setResults(JSON.parse(savedResults));
-    } catch {
-      localStorage.removeItem(STORAGE_TARGETS);
-      localStorage.removeItem(STORAGE_RESULTS);
-    }
-  }, []);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_TARGETS, JSON.stringify(targets));
@@ -66,7 +63,7 @@ export default function App() {
       const latency = Math.round(performance.now() - start);
       setResults(prev => [
         ...prev,
-        { id: `${target.id}-${Date.now()}`, targetId: target.id, timestamp: Date.now(), latency, status: 'OK' },
+        { id: `${target.id}-${Date.now()}`, targetId: target.id, timestamp: Date.now(), latency, status: 'OK' as const },
       ].slice(-MAX_RESULTS));
     } catch (error) {
       setResults(prev => [
@@ -76,7 +73,7 @@ export default function App() {
           targetId: target.id,
           timestamp: Date.now(),
           latency: 0,
-          status: 'DOWN',
+          status: 'DOWN' as const,
           error: error instanceof Error ? error.message : 'Network request failed',
         },
       ].slice(-MAX_RESULTS));
